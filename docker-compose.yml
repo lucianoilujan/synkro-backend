@@ -1,0 +1,41 @@
+services:
+  # Tu Backend real en Python
+  backend:
+    build: .
+    container_name: synkro-backend-app
+    ports:
+      - "8000:8000"
+    restart: always
+
+  # Base de datos para series de tiempo (IoT y Métricas)
+  influxdb:
+    image: influxdb:2.7
+    container_name: synkro-influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  # Agente de métricas (Por ejemplo, para trackear memoria)
+  telegraf:
+    image: telegraf:latest
+    container_name: synkro-telegraf
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+
+  # Panel de Control Gráfico
+  grafana:
+    image: grafana/grafana:latest
+    container_name: synkro-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - influxdb
+
+volumes:
+  influxdb_data:
+  grafana_data:
