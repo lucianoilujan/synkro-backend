@@ -1,5 +1,5 @@
 services:
-  # Tu Backend real en Python
+  # 1. Tu Backend real en Python
   backend:
     build: .
     container_name: synkro-backend-app
@@ -7,7 +7,7 @@ services:
       - "8000:8000"
     restart: always
 
-  # Base de datos para series de tiempo (IoT y Métricas)
+  # 2. Base de datos InfluxDB
   influxdb:
     image: influxdb:2.7
     container_name: synkro-influxdb
@@ -15,8 +15,12 @@ services:
       - "8086:8086"
     volumes:
       - influxdb_data:/var/lib/influxdb2
+    deploy:
+      resources:
+        limits:
+          memory: 350M
 
-  # Agente de métricas (Por ejemplo, para trackear memoria)
+  # 3. Agente de métricas Telegraf
   telegraf:
     image: telegraf:latest
     container_name: synkro-telegraf
@@ -25,7 +29,7 @@ services:
     depends_on:
       - influxdb
 
-  # Panel de Control Gráfico
+  # 4. Panel de Control Grafana
   grafana:
     image: grafana/grafana:latest
     container_name: synkro-grafana
@@ -35,7 +39,37 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - influxdb
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # 5. Broker MQTT (Mosquitto) - NUEVO
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: synkro-broker-mqtt
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+  # 6. Node-RED para lógica visual - NUEVO
+  nodered:
+    image: nodered/node-red:latest
+    container_name: synkro-backend-nodered
+    ports:
+      - "1880:1880"
+    volumes:
+      - nodered_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 200M
 
 volumes:
   influxdb_data:
   grafana_data:
+  mosquitto_data:
+  mosquitto_log:
+  nodered_data:
